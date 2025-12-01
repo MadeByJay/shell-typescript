@@ -1,3 +1,5 @@
+import path from "path";
+import fs from "fs";
 import { createInterface } from "readline";
 
 const rl = createInterface({
@@ -52,14 +54,39 @@ function handleExit() {
 }
 function handleEcho(args: string[]) {
   console.log(args.join(" "));
+  rl.prompt();
 }
 function handleType(commandStrArray: string[]) {
-  const command = commandDictionary[commandStrArray[0]];
+  const commandString = commandStrArray[0];
+  const command = commandDictionary[commandString];
 
-  if (!command) {
-    console.log(`${commandStrArray}: not found`);
-    return;
+  if (command) {
+    console.log(`${command} is a shell builtin`);
+    return rl.prompt();
   }
 
-  console.log(`${command} is a shell builtin`);
+  // Prints: '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin'
+  if (!process.env.PATH) {
+    return rl.prompt();
+  }
+
+  // Returns: ['/usr/bin', '/bin', '/usr/sbin', '/sbin', '/usr/local/bin']
+  const pathArray = (process.env.PATH || "")
+    .split(path.delimiter)
+    .filter(Boolean);
+
+  for (const dir of pathArray) {
+    const filePath = path.join(dir, commandString);
+
+    try {
+      fs.accessSync(filePath, fs.constants.X_OK);
+      console.log(`${commandString} is ${filePath}`);
+      return rl.prompt();
+    } catch (error) {
+      continue;
+    }
+  }
+
+  console.log(`${commandStrArray}: not found`);
+  rl.prompt();
 }
