@@ -1,3 +1,4 @@
+import { join } from "path";
 import { createInterface } from "readline";
 
 const rl = createInterface({
@@ -10,7 +11,9 @@ rl.prompt();
 
 rl.on("line", (line) => {
   const command = line.trim();
-  if (command) {
+  if (command === "exit") {
+    process.exit(0);
+  } else if (command) {
     console.log(`${command}: command not found`);
   }
 
